@@ -66,7 +66,7 @@ export async function POST(request: Request) {
       });
 
       if (!album) {
-        return NextResponse.json({ error: '图库不存在' }, { status: 404 });
+        return NextResponse.json({ error: '相册不存在' }, { status: 404 });
       }
     }
 

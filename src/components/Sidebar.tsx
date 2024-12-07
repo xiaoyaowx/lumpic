@@ -6,7 +6,7 @@ import { useState, useEffect } from 'react';
 
 const navigation = [
   {
-    name: '所有图片',
+    name: '我的空间',
     href: '/',
     icon: (
       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -15,7 +15,7 @@ const navigation = [
     ),
   },
   {
-    name: '图库管理',
+    name: '相册集',
     href: '/albums',
     icon: (
       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -40,13 +40,12 @@ export default function Sidebar() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // 关闭移动端菜单当路由改变时
   useEffect(() => {
     setIsMobileMenuOpen(false);
   }, [pathname]);
 
   const sidebarContent = (
-    <nav className="space-y-1">
+    <nav className="pt-5 space-y-1">
       {navigation.map((item) => {
         const isActive = pathname === item.href;
         return (
@@ -71,53 +70,51 @@ export default function Sidebar() {
 
   return (
     <>
-      {/* 移动端菜单按钮 */}
+      {/* 移动端菜单按钮和菜单 */}
       {isMobile && (
-        <button
-          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          className="fixed bottom-6 right-6 z-50 bg-blue-500 text-white p-4 rounded-full shadow-lg hover:bg-blue-600 transition-colors"
-        >
-          <svg
-            className="w-6 h-6"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
+        <div className="fixed bottom-6 right-6 z-50">
+          {/* 菜单按钮 */}
+          <button
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="bg-blue-600 text-white p-3 rounded-full shadow-lg hover:bg-blue-700 transition-colors"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d={
-                isMobileMenuOpen
-                  ? 'M6 18L18 6M6 6l12 12'
-                  : 'M4 6h16M4 12h16M4 18h16'
-              }
-            />
-          </svg>
-        </button>
+            <svg
+              className="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d={
+                  isMobileMenuOpen
+                    ? 'M6 18L18 6M6 6l12 12'
+                    : 'M4 6h16M4 12h16M4 18h16'
+                }
+              />
+            </svg>
+          </button>
+          
+          {/* 菜单内容 */}
+          {isMobileMenuOpen && (
+            <aside className="fixed bottom-24 right-6 w-48 bg-white rounded-lg shadow-xl overflow-hidden">
+              <div className="py-2">
+                {sidebarContent}
+              </div>
+            </aside>
+          )}
+        </div>
       )}
 
       {/* 桌面端侧边栏 */}
       {!isMobile && (
         <aside className="w-64 bg-white border-r fixed h-screen pt-16">
-          <div className="px-4 py-6">{sidebarContent}</div>
+          <div className="h-full px-4 py-6">
+            {sidebarContent}
+          </div>
         </aside>
-      )}
-
-      {/* 移动端菜单 */}
-      {isMobile && isMobileMenuOpen && (
-        <div className="fixed inset-0 z-40">
-          {/* 背景遮罩 */}
-          <div
-            className="fixed inset-0 bg-black bg-opacity-50"
-            onClick={() => setIsMobileMenuOpen(false)}
-          />
-          
-          {/* 菜单内容 */}
-          <aside className="fixed bottom-24 right-6 w-48 bg-white rounded-lg shadow-xl overflow-hidden">
-            <div className="py-2">{sidebarContent}</div>
-          </aside>
-        </div>
       )}
     </>
   );

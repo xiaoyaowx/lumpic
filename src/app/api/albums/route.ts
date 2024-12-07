@@ -61,29 +61,37 @@ export async function GET(request: Request) {
     }
 
     const albums = await prisma.album.findMany({
-      where: { userId: user.id },
+      where: {
+        userId: user.id,
+      },
       include: {
-        _count: {
-          select: { images: true }
-        },
         images: {
           take: 1,
           select: {
-            thumbnailUrl: true
-          }
+            url: true,
+            thumbnailUrl: true,
+          },
+          orderBy: {
+            createdAt: 'desc',
+          },
+        },
+        _count: {
+          select: { images: true }
         }
       },
-      orderBy: { createdAt: 'desc' }
+      orderBy: {
+        createdAt: 'desc',
+      },
     });
 
-    // 处理返回数据，添加封面图片
-    const processedAlbums = albums.map(album => ({
+    // 转换数据结构，添加封面图
+    const albumsWithCover = albums.map(album => ({
       ...album,
-      coverImage: album.images[0]?.thumbnailUrl || null,
-      images: undefined // 移除完整的图片数组
+      coverImage: album.images[0]?.thumbnailUrl || null, // 使用缩略图作为封面
+      images: undefined, // 移除原始的 images 数组
     }));
 
-    return NextResponse.json(processedAlbums);
+    return NextResponse.json(albumsWithCover);
   } catch (error) {
     console.error('获取相册列表失败:', error);
     return NextResponse.json({ error: '获取相册列表失败' }, { status: 500 });

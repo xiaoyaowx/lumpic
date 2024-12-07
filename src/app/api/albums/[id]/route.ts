@@ -31,9 +31,12 @@ export async function GET(
         images: {
           select: {
             id: true,
+            filename: true,
             title: true,
+            mimeType: true,
+            size: true,
+            createdAt: true,
             url: true,
-            thumbnailUrl: true,
           },
           orderBy: {
             createdAt: 'desc',
