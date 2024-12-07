@@ -121,6 +121,7 @@ export default function ExifDataDisplay({ exifData }: ExifDataDisplayProps) {
           if (!exifLabels[lowerKey] || !value) return null;
 
           if (lowerKey === 'gpslatitude' && exifData.gpsLongitude) {
+            const latitude = exifData.gpsLatitude ?? "Default Value";
             return (
               <div key="GPS" className="flex items-start space-x-2">
                 <FaMapMarkerAlt className="text-gray-500 mt-1" />
@@ -130,12 +131,12 @@ export default function ExifDataDisplay({ exifData }: ExifDataDisplayProps) {
                   </dt>
                   <dd className="mt-1 text-sm text-gray-900">
                     <a
-                      href={`https://www.google.com/maps?q=${exifData.gpsLatitude},${exifData.gpsLongitude}`}
+                      href={`https://www.google.com/maps?q=${latitude},${exifData.gpsLongitude}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-blue-500 hover:text-blue-600"
                     >
-                      {exifData.gpsLatitude.toFixed(6)}, {exifData.gpsLongitude.toFixed(6)}
+                      {typeof latitude === 'number' ? latitude.toFixed(6) : 'N/A'}, {typeof exifData.gpsLongitude === 'number' ? exifData.gpsLongitude.toFixed(6) : 'N/A'}
                     </a>
                   </dd>
                 </div>

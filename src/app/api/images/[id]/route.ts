@@ -89,6 +89,7 @@ export async function PUT(
 
     // 如果指定了相册，确认相册存在且属于当前用户
     if (albumId) {
+      
       const album = await prisma.album.findFirst({
         where: {
           id: albumId,

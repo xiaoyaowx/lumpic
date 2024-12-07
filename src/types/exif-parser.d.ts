@@ -13,6 +13,29 @@ declare module 'exif-parser' {
     GPSLongitude?: number;
   }
 
+  interface ExifData {
+    [key: string]: any; 
+    make?: string;
+    model?: string;
+    exposureTime?: string;
+    fNumber?: string;
+    iso?: number;
+    dateTimeOriginal?: string;
+    focalLength?: string;
+    lensModel?: string;
+    gpsLatitude?: number;
+    gpsLongitude?: number;
+    width?: number;
+    height?: number;
+    software?: string;
+    orientation?: number;
+    flash?: number;
+    meteringMode?: string;
+    whiteBalance?: string;
+    imageDescription?: string;
+    copyright?: string;
+  }
+
   interface ExifResult {
     tags: ExifTags;
     imageSize: {
