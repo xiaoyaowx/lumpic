@@ -1,0 +1,8 @@
+{
+  "/page": "app/page.js",
+  "/albums/page": "app/albums/page.js",
+  "/albums/[id]/page": "app/albums/[id]/page.js",
+  "/image/[id]/page": "app/image/[id]/page.js",
+  "/api/auth/[...nextauth]/route": "app/api/auth/[...nextauth]/route.js",
+  "/api/images/route": "app/api/images/route.js"
+}
