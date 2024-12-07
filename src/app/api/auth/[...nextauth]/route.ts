@@ -6,8 +6,17 @@ import bcrypt from "bcrypt";
 import NextAuth from "next-auth/next";
 
 const authOptions: NextAuthOptions = {
-  debug: true,
+  debug: process.env.NODE_ENV === 'development',
   adapter: PrismaAdapter(prisma) as any,
+  session: {
+    strategy: "jwt",
+    maxAge: 30 * 24 * 60 * 60, // 30 days
+  },
+  pages: {
+    signIn: '/login',
+    signOut: '/login',
+    error: '/login',
+  },
   providers: [
     CredentialsProvider({
       name: "credentials",
@@ -17,7 +26,7 @@ const authOptions: NextAuthOptions = {
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
-          return null;
+          throw new Error("请输入邮箱和密码");
         }
 
         try {
@@ -28,7 +37,7 @@ const authOptions: NextAuthOptions = {
           });
 
           if (!user || !user.hashedPassword) {
-            return null;
+            throw new Error("邮箱或密码错误");
           }
 
           const isPasswordValid = await bcrypt.compare(
@@ -37,7 +46,7 @@ const authOptions: NextAuthOptions = {
           );
 
           if (!isPasswordValid) {
-            return null;
+            throw new Error("邮箱或密码错误");
           }
 
           return {
@@ -46,17 +55,12 @@ const authOptions: NextAuthOptions = {
             name: user.name,
           };
         } catch (error) {
-          return null;
+          console.error("登录验证错误:", error);
+          throw error;
         }
       },
     }),
   ],
-  session: {
-    strategy: "jwt",
-  },
-  pages: {
-    signIn: "/login",
-  },
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
@@ -65,7 +69,7 @@ const authOptions: NextAuthOptions = {
       return token;
     },
     async session({ session, token }) {
-      if (session.user) {
+      if (token && session.user) {
         session.user.id = token.id as string;
       }
       return session;

@@ -1,19 +1,20 @@
 'use client';
 
 import { signIn } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import Logo from '@/components/Logo';
+import toast from 'react-hot-toast';
 
 export default function LoginPage() {
-  const router = useRouter();
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (loading) return;
+    
     setLoading(true);
     setError('');
     
@@ -22,22 +23,31 @@ export default function LoginPage() {
       const response = await signIn('credentials', {
         email: formData.get('email'),
         password: formData.get('password'),
-        redirect: false,
+        callbackUrl: '/',
+        redirect: true,
       });
-
+      
+      // 由于设置了 redirect: true，这里的代码只会在出错时执行
       if (response?.error) {
         setError('邮箱或密码错误');
-        return;
+        toast.error('邮箱或密码错误');
       }
-
-      router.push('/');
-      router.refresh();
     } catch (error) {
+      console.error('登录错误:', error);
       setError('系统错误，请稍后重试');
+      toast.error('系统错误，请稍后重试');
     } finally {
       setLoading(false);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen w-full flex">
