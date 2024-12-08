@@ -111,8 +111,15 @@ export default function Sidebar() {
       {/* 桌面端侧边栏 */}
       {!isMobile && (
         <aside className="w-64 bg-white border-r fixed h-screen pt-16">
-          <div className="h-full px-4 py-6">
+          <div className="h-full px-4 py-6 flex flex-col">
             {sidebarContent}
+            <div className="mt-auto pt-6 flex items-center justify-center">
+              <div className="px-3 py-1.5 bg-gray-50 rounded-full border border-gray-100 shadow-sm">
+                <span className="text-xs font-medium bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent">
+                  版本 0.1.0
+                </span>
+              </div>
+            </div>
           </div>
         </aside>
       )}
