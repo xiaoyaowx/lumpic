@@ -6,10 +6,12 @@ import Link from 'next/link';
 import Image from 'next/image';
 import Logo from '@/components/Logo';
 import toast from 'react-hot-toast';
+import { useRouter } from 'next/navigation';
 
 export default function LoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -23,14 +25,16 @@ export default function LoginPage() {
       const response = await signIn('credentials', {
         email: formData.get('email'),
         password: formData.get('password'),
-        callbackUrl: '/',
-        redirect: true,
+        redirect: false,
       });
       
-      // 由于设置了 redirect: true，这里的代码只会在出错时执行
       if (response?.error) {
         setError('邮箱或密码错误');
         toast.error('邮箱或密码错误');
+      } else if (response?.ok) {
+        toast.success('登录成功');
+        // 使用 window.location 进行硬跳转
+        window.location.href = '/';
       }
     } catch (error) {
       console.error('登录错误:', error);
@@ -100,14 +104,14 @@ export default function LoginPage() {
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                邮箱地址
+                邮箱
               </label>
               <input
                 type="email"
                 name="email"
                 required
                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="请输入邮箱地址"
+                placeholder="请输入邮箱"
               />
             </div>
 
