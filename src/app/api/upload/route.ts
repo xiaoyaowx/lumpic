@@ -7,31 +7,10 @@ import { join } from 'path';
 import { nanoid } from 'nanoid';
 import sharp from 'sharp';
 import ExifParser from 'exif-parser';
+import { ExifData } from '@/types/exif';
 
 const UPLOAD_DIR = join(process.cwd(), 'public', 'uploads');
 const THUMBNAIL_DIR = join(process.cwd(), 'public', 'thumbnails');
-
-interface ExifData {
-  make?: string;
-  model?: string;
-  exposureTime?: number;
-  fNumber?: number;
-  iso?: number;
-  dateTimeOriginal?: number;
-  focalLength?: number;
-  lensModel?: string;
-  gpsLatitude?: number;
-  gpsLongitude?: number;
-  width?: number;
-  height?: number;
-  software?: string;
-  orientation?: number;
-  flash?: number;
-  meteringMode?: string;
-  whiteBalance?: string;
-  imageDescription?: string;
-  copyright?: string;
-}
 
 export async function POST(request: Request) {
   try {
@@ -156,7 +135,7 @@ export async function POST(request: Request) {
             size: file.size,
             width: metadata.width || 0,
             height: metadata.height || 0,
-            exifData: Object.keys(exifData).length > 0 ? exifData : null,
+            exifData: Object.keys(exifData).length > 0 ? exifData as any : undefined,
           },
           include: {
             album: {

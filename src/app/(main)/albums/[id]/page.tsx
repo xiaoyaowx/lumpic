@@ -7,22 +7,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import toast from 'react-hot-toast';
 import ImageUploader from '@/components/ImageUploader';
-
-interface Album {
-  id: string;
-  name: string;
-  description: string;
-  createdAt: string;
-  images: {
-    id: string;
-    filename: string;
-    title: string | null;
-    mimeType: string;
-    size: number;
-    createdAt: string;
-    url: string;
-  }[];
-}
+import { Album } from '@/types/album';
 
 export default function AlbumPage({ params }: { params: { id: string } }) {
   const { data: session, status } = useSession();
@@ -79,8 +64,7 @@ export default function AlbumPage({ params }: { params: { id: string } }) {
           ...prev,
           images: prev.images.filter(img => img.id !== imageId),
           _count: {
-            ...prev._count,
-            images: prev._count.images - 1
+            images: (prev._count?.images ?? prev.images.length) - 1
           }
         } : null
       );

@@ -1,7 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
-    domains: ['localhost', 'images.unsplash.com', 'api.dicebear.com'],
     dangerouslyAllowSVG: true,
     contentDispositionType: 'attachment',
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
@@ -54,7 +53,7 @@ const nextConfig = {
   webpack: (config, { webpack }) => {
     config.ignoreWarnings = [
       { module: /node_modules\/node-fetch\/lib\/index\.js/ },
-      { module: /node_modules\/punycode\// }
+      { module: /node_modules\/punycode\/punycode\.js/ },
     ];
     config.experiments = {
       ...config.experiments,

@@ -27,10 +27,8 @@ export default function EditAlbumModal({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose}>
+    <Modal isOpen={isOpen} onClose={onClose} title="编辑相册">
       <form onSubmit={handleSubmit} className="space-y-4">
-        <h2 className="text-xl font-semibold mb-4">编辑相册</h2>
-        
         <div>
           <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
             相册名称
