@@ -5,6 +5,7 @@ import { authOptions } from '@/app/api/auth/auth.config';
 import { isAdmin } from '@/lib/utils';
 import * as z from 'zod';
 import bcrypt from 'bcryptjs';
+import { Prisma } from '@prisma/client';
 
 // 用户列表的查询参数验证
 const querySchema = z.object({
@@ -45,11 +46,11 @@ export async function GET(req: NextRequest) {
     });
 
     // 构建查询条件
-    const where = query.search
+    const where: Prisma.UserWhereInput = query.search
       ? {
           OR: [
-            { name: { contains: query.search, mode: 'insensitive' } },
-            { email: { contains: query.search, mode: 'insensitive' } },
+            { name: { contains: query.search, mode: Prisma.QueryMode.insensitive } },
+            { email: { contains: query.search, mode: Prisma.QueryMode.insensitive } },
           ],
         }
       : {};

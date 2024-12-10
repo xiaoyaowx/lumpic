@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { format } from 'date-fns';
 import { toast } from 'react-hot-toast';
 import UserFormDialog from '@/components/UserFormDialog';
+import ConfirmDialog from '@/components/ConfirmDialog';
 
 interface User {
   id: string;
@@ -42,6 +43,8 @@ export default function UsersPage() {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<User | null>(null);
 
   // 加载用户列表
   const loadUsers = async () => {
@@ -76,10 +79,6 @@ export default function UsersPage() {
 
   // 删除用户
   const handleDelete = async (userId: string) => {
-    if (!confirm('确定要删除这个用户吗？此操作不可恢复。')) {
-      return;
-    }
-
     try {
       const response = await fetch(`/api/admin/users/${userId}`, {
         method: 'DELETE',
@@ -94,6 +93,19 @@ export default function UsersPage() {
       loadUsers();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : '删除用户失败');
+    }
+  };
+
+  // 打开删除确认对话框
+  const openDeleteConfirm = (user: User) => {
+    setUserToDelete(user);
+    setIsConfirmOpen(true);
+  };
+
+  // 确认删除
+  const confirmDelete = () => {
+    if (userToDelete) {
+      handleDelete(userToDelete.id);
     }
   };
 
@@ -335,7 +347,7 @@ export default function UsersPage() {
                           编辑
                         </button>
                         <button
-                          onClick={() => handleDelete(user.id)}
+                          onClick={() => openDeleteConfirm(user)}
                           className="text-red-600 hover:text-red-900"
                         >
                           删除
@@ -383,6 +395,21 @@ export default function UsersPage() {
           </button>
         </div>
       </div>
+
+      {/* 删除确认对话框 */}
+      <ConfirmDialog
+        isOpen={isConfirmOpen}
+        onClose={() => {
+          setIsConfirmOpen(false);
+          setUserToDelete(null);
+        }}
+        onConfirm={confirmDelete}
+        title="删除用户"
+        message={`确定要删除用户 "${userToDelete?.name || userToDelete?.email}" 吗？此操作不可恢复。`}
+        confirmText="删除"
+        cancelText="取消"
+        type="danger"
+      />
 
       {/* 用户表单对话框 */}
       <UserFormDialog
