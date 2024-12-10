@@ -8,9 +8,6 @@ import { ExifData } from '@/types/exif';
 import { generateDateBasedPath } from '@/lib/storage';
 import fs from 'fs/promises';
 
-const UPLOAD_DIR = 'public/uploads';
-const THUMBNAIL_DIR = 'public/thumbnails';
-
 export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions);
@@ -79,12 +76,29 @@ export async function POST(request: Request) {
 
         await fs.writeFile(thumbnailPath, thumbnail);
 
+        // 获取图片基本信息
+        const metadata = await sharp(buffer).metadata();
+
         // 提取EXIF数据
         let exifData: ExifData = {};
+        let photoTakenAt: Date = new Date(); // 默认使用当前时间
+
         try {
           const parser = ExifParser.create(buffer);
           const result = parser.parse();
-          const metadata = await sharp(buffer).metadata();
+          
+          // 处理拍摄时间
+          if (result.tags.DateTimeOriginal) {
+            const timestamp = result.tags.DateTimeOriginal;
+            // 确保时间戳是有效的
+            if (timestamp > 0) {
+              const date = new Date(timestamp * 1000);
+              // 如果转换后的日期有效，使用它
+              if (!isNaN(date.getTime())) {
+                photoTakenAt = date;
+              }
+            }
+          }
           
           exifData = {
             make: result.tags.Make?.toString(),
@@ -99,13 +113,6 @@ export async function POST(request: Request) {
             gpsLongitude: result.tags.GPSLongitude,
             width: metadata.width,
             height: metadata.height,
-            software: result.tags.Software?.toString(),
-            orientation: result.tags.Orientation,
-            flash: result.tags.Flash,
-            meteringMode: result.tags.MeteringMode?.toString(),
-            whiteBalance: result.tags.WhiteBalance?.toString(),
-            imageDescription: result.tags.ImageDescription?.toString(),
-            copyright: result.tags.Copyright?.toString(),
           };
 
           // 移除所有 undefined 值
@@ -115,26 +122,26 @@ export async function POST(request: Request) {
             }
           });
         } catch (error) {
-          console.warn('无法解析EXIF数据:', error);
+          console.error('解析EXIF数据失败:', error);
         }
 
-        // 获取图片尺寸
-        const metadata = await sharp(buffer).metadata();
-
-        // 保存到数据库
-        return prisma.image.create({
+        // 创建图片记录
+        const image = await prisma.image.create({
           data: {
-            userId: user.id,
-            albumId: albumId || null,
             title: file.name,
             filename: file.name,
             url: imageUrl,
             thumbnailUrl: thumbnailUrl,
             mimeType: file.type,
             size: file.size,
-            width: metadata.width || 0,
-            height: metadata.height || 0,
-            exifData: Object.keys(exifData).length > 0 ? exifData as any : undefined,
+            width: metadata.width,
+            height: metadata.height,
+            exifData: Object.keys(exifData).length > 0 ? exifData : undefined,
+            photoTakenAt, // 使用从 EXIF 中提取的拍摄时间或默认的当前时间
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            userId: user.id,
+            albumId: albumId || null,
           },
           include: {
             album: {
@@ -145,14 +152,20 @@ export async function POST(request: Request) {
             },
           },
         });
+
+        return image;
       })
     );
 
-    return NextResponse.json(uploadedImages);
+    return NextResponse.json({ 
+      message: '上传成功', 
+      images: uploadedImages 
+    });
+
   } catch (error) {
     console.error('上传失败:', error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : '上传失败，请稍后重试' },
+      { error: error instanceof Error ? error.message : '上传失败' },
       { status: 500 }
     );
   }

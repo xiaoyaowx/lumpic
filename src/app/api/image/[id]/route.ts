@@ -113,7 +113,6 @@ export async function PUT(
         url: imageUrl,
         thumbnailUrl,
         albumId: albumId || null,
-        status: "ACTIVE",
       },
     });
 

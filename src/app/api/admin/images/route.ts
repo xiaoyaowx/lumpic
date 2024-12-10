@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/auth.config';
 import prisma from '@/lib/prisma';
+import { Prisma } from '@prisma/client';
 
 // GET /api/admin/images - 获取图片列表
 export async function GET(request: Request) {
@@ -18,22 +19,40 @@ export async function GET(request: Request) {
     const search = searchParams.get('search') || '';
 
     // 构建查询条件
-    const where = search
-      ? {
-          OR: [
-            { title: { contains: search, mode: 'insensitive' } },
-            { description: { contains: search, mode: 'insensitive' } },
-            {
-              user: {
-                OR: [
-                  { name: { contains: search, mode: 'insensitive' } },
-                  { email: { contains: search, mode: 'insensitive' } },
-                ],
+    const where: Prisma.ImageWhereInput = search ? {
+      OR: [
+        {
+          title: {
+            contains: search,
+            mode: 'insensitive' as Prisma.QueryMode,
+          },
+        },
+        {
+          description: {
+            contains: search,
+            mode: 'insensitive' as Prisma.QueryMode,
+          },
+        },
+        {
+          user: {
+            OR: [
+              {
+                name: {
+                  contains: search,
+                  mode: 'insensitive' as Prisma.QueryMode,
+                },
               },
-            },
-          ],
-        }
-      : {};
+              {
+                email: {
+                  contains: search,
+                  mode: 'insensitive' as Prisma.QueryMode,
+                },
+              },
+            ],
+          },
+        },
+      ],
+    } : {};
 
     // 查询总数
     const total = await prisma.image.count({ where });
@@ -51,7 +70,7 @@ export async function GET(request: Request) {
         },
       },
       orderBy: {
-        createdAt: 'desc',
+        createdAt: 'desc' as Prisma.SortOrder,
       },
       skip: (page - 1) * pageSize,
       take: pageSize,

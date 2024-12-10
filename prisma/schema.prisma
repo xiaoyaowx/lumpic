@@ -46,6 +46,7 @@ model Image {
   userId       String
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   exifData     Json?
+  photoTakenAt DateTime @default(now())
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   albumId      String?

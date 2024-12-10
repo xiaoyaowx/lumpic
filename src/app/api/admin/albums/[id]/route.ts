@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '../../../auth/auth.config';
 import prisma from '@/lib/prisma';
+import { deleteImage } from '@/lib/storage';
 
 // 删除相册
 export async function DELETE(
@@ -54,6 +55,19 @@ export async function DELETE(
         },
       }),
     ]);
+
+    // 删除相册中的所有图片文件
+    for (const image of album.images) {
+      try {
+        // 删除原图和缩略图
+        await Promise.all([
+          deleteImage(image.url, true),
+          deleteImage(image.thumbnailUrl, true),
+        ]);
+      } catch (error) {
+        console.error(`删除图片文件失败: ${image.url}`, error);
+      }
+    }
 
     return new Response(null, { status: 204 });
   } catch (error) {

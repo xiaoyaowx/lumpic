@@ -19,17 +19,13 @@ function getDateBasedDir(baseDir: string, date: Date = new Date()): string {
 
 /**
  * 从URL中获取文件路径
+ * 例如: /uploads/2024/12/10/image.jpg -> /Users/xxx/project/public/uploads/2024/12/10/image.jpg
  */
 function getFilePathFromUrl(url: string): string {
-  try {
-    // 从URL中提取文件路径
-    const urlPath = new URL(url, 'http://localhost').pathname;
-    // 将URL路径转换为文件系统路径
-    return path.join(process.cwd(), 'public', urlPath);
-  } catch (error) {
-    console.error('Invalid URL:', url);
-    throw new Error('Invalid file URL');
-  }
+  // 移除开头的斜杠（如果存在）
+  const cleanUrl = url.startsWith('/') ? url.slice(1) : url;
+  // 直接拼接到 public 目录
+  return path.join(process.cwd(), 'public', cleanUrl);
 }
 
 /**
@@ -46,7 +42,7 @@ async function ensureDir(dir: string): Promise<void> {
 
 /**
  * 删除图片文件
- * @param url 图片的URL地址
+ * @param url 图片的URL地址（例如：/uploads/2024/12/10/image.jpg）
  * @param silent 如果为true，文件不存在时不会抛出错误
  */
 export async function deleteImage(url: string, silent: boolean = true): Promise<void> {
@@ -57,6 +53,7 @@ export async function deleteImage(url: string, silent: boolean = true): Promise<
 
   try {
     const filePath = getFilePathFromUrl(url);
+    console.log('Deleting file:', filePath);
     
     // 检查文件是否存在
     try {
@@ -73,16 +70,21 @@ export async function deleteImage(url: string, silent: boolean = true): Promise<
     await fs.unlink(filePath);
     console.log(`Successfully deleted file: ${filePath}`);
 
-    // 尝试删除空目录
+    // 尝试递归删除空目录
     try {
-      const dirPath = path.dirname(filePath);
-      const files = await fs.readdir(dirPath);
-      if (files.length === 0) {
-        await fs.rmdir(dirPath);
-        console.log(`Removed empty directory: ${dirPath}`);
+      let dirPath = path.dirname(filePath);
+      while (dirPath !== path.join(process.cwd(), 'public')) {
+        const files = await fs.readdir(dirPath);
+        if (files.length === 0) {
+          await fs.rmdir(dirPath);
+          console.log(`Removed empty directory: ${dirPath}`);
+          dirPath = path.dirname(dirPath);
+        } else {
+          break;
+        }
       }
     } catch (error) {
-      console.warn('Failed to remove empty directory:', error);
+      console.warn('Failed to remove empty directories:', error);
     }
   } catch (error) {
     console.error('Error deleting file:', error);
@@ -98,60 +100,29 @@ export async function deleteImage(url: string, silent: boolean = true): Promise<
  * @param type 'image' | 'thumbnail'
  * @returns {object} 包含URL和文件系统路径的对象
  */
-export async function generateDateBasedPath(originalName: string, type: 'image' | 'thumbnail' = 'image'): Promise<{
-  url: string;
-  filePath: string;
-}> {
+export async function generateDateBasedPath(
+  originalName: string,
+  type: 'image' | 'thumbnail' = 'image'
+): Promise<{ url: string; filePath: string }> {
   const baseDir = type === 'image' ? BASE_UPLOAD_DIR : BASE_THUMBNAIL_DIR;
   const date = new Date();
   const dateDir = getDateBasedDir(baseDir, date);
   
   // 确保目录存在
   await ensureDir(dateDir);
-
-  // 生成文件名
-  const filename = generateUniqueFileName(originalName);
+  
+  // 生成唯一文件名
+  const timestamp = Date.now();
+  const randomStr = Math.random().toString(36).substring(2, 8);
+  const ext = path.extname(originalName);
+  const filename = `${timestamp}-${randomStr}${ext}`;
+  
+  // 生成完整路径
   const filePath = path.join(dateDir, filename);
   
-  // 生成URL（相对于public目录）
-  const relativeDir = getDateBasedDir(type === 'image' ? 'uploads' : 'thumbnails', date);
-  const url = `/${relativeDir.replace(/\\/g, '/')}/${filename}`;
-
+  // 生成URL（从public目录开始的相对路径）
+  const relativeDir = type === 'image' ? 'uploads' : 'thumbnails';
+  const url = `/${relativeDir}/${format(date, 'yyyy/MM/dd')}/${filename}`;
+  
   return { url, filePath };
-}
-
-/**
- * 确保上传目录存在
- */
-export async function ensureUploadDir(): Promise<void> {
-  try {
-    await fs.access(BASE_UPLOAD_DIR);
-  } catch {
-    await fs.mkdir(BASE_UPLOAD_DIR, { recursive: true });
-    console.log(`Created upload directory: ${BASE_UPLOAD_DIR}`);
-  }
-}
-
-/**
- * 生成唯一的文件名
- */
-export function generateUniqueFileName(originalName: string): string {
-  const timestamp = Date.now();
-  const random = Math.random().toString(36).substring(2, 8);
-  const ext = path.extname(originalName);
-  return `${timestamp}-${random}${ext}`;
-}
-
-/**
- * 获取上传目录的绝对路径
- */
-export function getUploadDir(): string {
-  return BASE_UPLOAD_DIR;
-}
-
-/**
- * 获取缩略图目录的绝对路径
- */
-export function getThumbnailDir(): string {
-  return BASE_THUMBNAIL_DIR;
 }

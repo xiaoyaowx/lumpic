@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '../../auth/auth.config';
 import prisma from '@/lib/prisma';
+import { Prisma } from '@prisma/client';
 
 // 获取相册列表
 export async function GET(request: Request) {
@@ -18,16 +19,22 @@ export async function GET(request: Request) {
     const search = searchParams.get('search') || '';
 
     // 构建查询条件
-    const where = {
-      ...(search
-        ? {
-            OR: [
-              { name: { contains: search, mode: 'insensitive' } },
-              { description: { contains: search, mode: 'insensitive' } },
-            ],
-          }
-        : {}),
-    };
+    const where: Prisma.AlbumWhereInput = search ? {
+      OR: [
+        {
+          name: {
+            contains: search,
+            mode: 'insensitive' as Prisma.QueryMode,
+          },
+        },
+        {
+          description: {
+            contains: search,
+            mode: 'insensitive' as Prisma.QueryMode,
+          },
+        },
+      ],
+    } : {};
 
     // 查询总数
     const total = await prisma.album.count({ where });
@@ -52,12 +59,12 @@ export async function GET(request: Request) {
             thumbnailUrl: true,
           },
           orderBy: {
-            createdAt: 'desc',
+            createdAt: 'desc' as Prisma.SortOrder,
           },
         },
       },
       orderBy: {
-        createdAt: 'desc',
+        createdAt: 'desc' as Prisma.SortOrder,
       },
       skip: (page - 1) * pageSize,
       take: pageSize,
