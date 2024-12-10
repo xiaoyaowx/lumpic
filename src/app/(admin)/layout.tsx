@@ -34,8 +34,12 @@ export default function AdminLayout({
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {children}
+    <div className="min-h-screen bg-gray-100">
+      <main className="flex-1">
+        <div className="py-6">
+          {children}
+        </div>
+      </main>
     </div>
   );
 }
