@@ -2,8 +2,12 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '../../auth/auth.config';
+import { deleteImage } from '@/lib/storage';
 import { unlink } from 'fs/promises';
 import { join } from 'path';
+import { generateDateBasedPath } from '@/lib/storage';
+import fs from 'fs/promises';
+import sharp from 'sharp';
 
 // 获取单张图片详情
 export async function GET(
@@ -64,67 +68,64 @@ export async function PUT(
 ) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: '未登录' }, { status: 401 });
-    }
-
-    const { title, description, albumId } = await request.json();
-
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
-    });
-
-    if (!user) {
-      return NextResponse.json({ error: '用户不存在' }, { status: 404 });
-    }
-
-    const image = await prisma.image.findFirst({
-      where: {
-        id: params.id,
-        userId: user.id,
-      },
-    });
-
-    if (!image) {
-      return NextResponse.json({ error: '图片不存在' }, { status: 404 });
-    }
-
-    // 如果指定了相册，确认相册存在且属于当前用户
-    if (albumId) {
-      
-      const album = await prisma.album.findFirst({
-        where: {
-          id: albumId,
-          userId: user.id,
-        },
+    if (!session?.user) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
       });
-
-      if (!album) {
-        return NextResponse.json({ error: '相册不存在' }, { status: 404 });
-      }
     }
 
-    const updatedImage = await prisma.image.update({
+    const formData = await request.formData();
+    const file = formData.get("file") as File;
+    const title = formData.get("title") as string;
+    const description = formData.get("description") as string;
+    const albumId = formData.get("albumId") as string;
+
+    if (!file) {
+      return new Response(JSON.stringify({ error: "No file uploaded" }), {
+        status: 400,
+      });
+    }
+
+    const buffer = Buffer.from(await file.arrayBuffer());
+    
+    // 使用新的基于日期的路径生成
+    const { url: imageUrl, filePath: imagePath } = await generateDateBasedPath(file.name, 'image');
+    const { url: thumbnailUrl, filePath: thumbnailPath } = await generateDateBasedPath(file.name, 'thumbnail');
+
+    // 保存原始图片
+    await fs.writeFile(imagePath, buffer);
+
+    // 生成并保存缩略图
+    const thumbnail = await sharp(buffer)
+      .resize(200, 200, {
+        fit: 'cover',
+        position: 'center'
+      })
+      .toBuffer();
+    await fs.writeFile(thumbnailPath, thumbnail);
+
+    // 更新数据库记录
+    const image = await prisma.image.update({
       where: { id: params.id },
       data: {
         title,
         description,
+        url: imageUrl,
+        thumbnailUrl,
         albumId: albumId || null,
-      },
-      include: {
-        album: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
+        status: "ACTIVE",
       },
     });
 
-    return NextResponse.json(updatedImage);
+    return new Response(JSON.stringify(image), {
+      status: 200,
+    });
   } catch (error) {
-    console.error('更新图片失败:', error);
-    return NextResponse.json({ error: '更新图片失败' }, { status: 500 });
+    console.error("Error uploading image:", error);
+    return new Response(
+      JSON.stringify({ error: "Failed to upload image" }),
+      { status: 500 }
+    );
   }
 }
 
@@ -134,6 +135,7 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
+    // 检查用户权限
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
       return NextResponse.json({ error: '未登录' }, { status: 401 });
@@ -147,36 +149,23 @@ export async function DELETE(
       return NextResponse.json({ error: '用户不存在' }, { status: 404 });
     }
 
+    // 查找图片并验证所有权
     const image = await prisma.image.findFirst({
       where: {
         id: params.id,
-        userId: user.id,
+        userId: user.id, // 确保只能删除自己的图片
       },
     });
 
     if (!image) {
-      return NextResponse.json({ error: '图片不存在' }, { status: 404 });
+      return NextResponse.json({ error: '图片不存在或无权限删除' }, { status: 404 });
     }
 
     // 删除图片文件
     try {
-      const uploadPath = join(process.cwd(), 'public', 'uploads');
-      const thumbnailPath = join(process.cwd(), 'public', 'thumbnails');
-      
-      // 从 URL 中提取文件名
-      const filename = image.url.split('/').pop();
-      const thumbnailFilename = image.thumbnailUrl.split('/').pop();
-      
-      if (filename) {
-        await unlink(join(uploadPath, filename)).catch(() => {
-          console.warn(`原始图片文件不存在: ${filename}`);
-        });
-      }
-      
-      if (thumbnailFilename) {
-        await unlink(join(thumbnailPath, thumbnailFilename)).catch(() => {
-          console.warn(`缩略图文件不存在: ${thumbnailFilename}`);
-        });
+      await deleteImage(image.url);
+      if (image.thumbnailUrl) {
+        await deleteImage(image.thumbnailUrl);
       }
     } catch (error) {
       console.error('删除图片文件失败:', error);

@@ -2,15 +2,14 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '../auth/auth.config';
 import prisma from '@/lib/prisma';
-import { writeFile } from 'fs/promises';
-import { join } from 'path';
-import { nanoid } from 'nanoid';
 import sharp from 'sharp';
 import ExifParser from 'exif-parser';
 import { ExifData } from '@/types/exif';
+import { generateDateBasedPath } from '@/lib/storage';
+import fs from 'fs/promises';
 
-const UPLOAD_DIR = join(process.cwd(), 'public', 'uploads');
-const THUMBNAIL_DIR = join(process.cwd(), 'public', 'thumbnails');
+const UPLOAD_DIR = 'public/uploads';
+const THUMBNAIL_DIR = 'public/thumbnails';
 
 export async function POST(request: Request) {
   try {
@@ -62,15 +61,15 @@ export async function POST(request: Request) {
         }
 
         const buffer = Buffer.from(await file.arrayBuffer());
-        const fileId = nanoid();
-        const extension = file.name.split('.').pop()?.toLowerCase() || 'jpg';
-        const filename = `${fileId}.${extension}`;
-        const thumbnailFilename = `${fileId}_thumb.${extension}`;
+
+        // 使用新的基于日期的路径生成
+        const { url: imageUrl, filePath: imagePath } = await generateDateBasedPath(file.name, 'image');
+        const { url: thumbnailUrl, filePath: thumbnailPath } = await generateDateBasedPath(file.name, 'thumbnail');
 
         // 保存原始图片
-        await writeFile(join(UPLOAD_DIR, filename), buffer);
+        await fs.writeFile(imagePath, buffer);
 
-        // 生成缩略图
+        // 生成并保存缩略图
         const thumbnail = await sharp(buffer)
           .resize(300, 300, {
             fit: 'cover',
@@ -78,7 +77,7 @@ export async function POST(request: Request) {
           })
           .toBuffer();
 
-        await writeFile(join(THUMBNAIL_DIR, thumbnailFilename), thumbnail);
+        await fs.writeFile(thumbnailPath, thumbnail);
 
         // 提取EXIF数据
         let exifData: ExifData = {};
@@ -128,9 +127,9 @@ export async function POST(request: Request) {
             userId: user.id,
             albumId: albumId || null,
             title: file.name,
-            filename,
-            url: `/uploads/${filename}`,
-            thumbnailUrl: `/thumbnails/${thumbnailFilename}`,
+            filename: file.name,
+            url: imageUrl,
+            thumbnailUrl: thumbnailUrl,
             mimeType: file.type,
             size: file.size,
             width: metadata.width || 0,

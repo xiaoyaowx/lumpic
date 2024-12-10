@@ -12,6 +12,7 @@ import {
   FolderIcon,
   ServerIcon,
 } from '@heroicons/react/24/outline';
+import Link from 'next/link';
 
 interface Stats {
   userCount: number;
@@ -263,26 +264,48 @@ export default function AdminPage() {
           <div className="p-6">
             <div className="flex items-center justify-between">
               <h2 className="text-base font-medium text-gray-900">最近图片</h2>
+              <Link href="/admin/images" className="text-sm font-medium text-blue-600 hover:text-blue-500">
+                查看全部
+              </Link>
             </div>
             <div className="mt-6 flow-root">
-              <ul role="list" className="grid grid-cols-2 gap-4">
+              <ul role="list" className="-my-5 divide-y divide-gray-200">
                 {data.recentImages.map((image) => (
-                  <li key={image.id} className="relative">
-                    <div className="group block w-full aspect-square overflow-hidden rounded-lg bg-gray-100">
-                      <img
-                        src={image.thumbnailUrl}
-                        alt={image.title}
-                        className="object-cover group-hover:opacity-75"
-                      />
-                      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent p-4">
-                        <p className="text-sm font-medium text-white truncate">{image.title}</p>
-                        <p className="text-xs text-gray-300 truncate">
-                          上传于{' '}
+                  <li key={image.id} className="py-4">
+                    <div className="flex items-center space-x-4">
+                      <div className="flex-shrink-0 w-12 h-12">
+                        <img
+                          src={image.thumbnailUrl}
+                          alt={image.title}
+                          className="object-cover w-full h-full rounded-lg"
+                        />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium text-gray-900 truncate">
+                          {image.title || image.filename}
+                        </p>
+                        <div className="flex items-center gap-2">
+                          <Avatar className="w-5 h-5">
+                            <AvatarImage src={image.user.image || undefined} />
+                            <AvatarFallback className="text-[10px] bg-blue-50 text-blue-600">
+                              {image.user.name?.slice(0, 2).toUpperCase() || 'U'}
+                            </AvatarFallback>
+                          </Avatar>
+                          <p className="text-sm text-gray-500 truncate">
+                            {image.user.name}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex flex-col items-end gap-1">
+                        <span className="text-sm text-gray-500">
+                          {formatBytes(image.size)}
+                        </span>
+                        <span className="text-xs text-gray-400">
                           {formatDistanceToNow(new Date(image.createdAt), {
                             addSuffix: true,
                             locale: zhCN,
                           })}
-                        </p>
+                        </span>
                       </div>
                     </div>
                   </li>
