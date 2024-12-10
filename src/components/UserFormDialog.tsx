@@ -139,11 +139,11 @@ export default function UserFormDialog({
               leaveFrom="opacity-100 scale-100"
               leaveTo="opacity-0 scale-95"
             >
-              <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 shadow-xl transition-all">
-                <div className="absolute right-0 top-0 hidden pr-4 pt-4 sm:block">
+              <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-8 shadow-xl transition-all">
+                <div className="absolute right-0 top-0 pr-6 pt-6 sm:block">
                   <button
                     type="button"
-                    className="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                    className="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200"
                     onClick={onClose}
                   >
                     <span className="sr-only">关闭</span>
@@ -152,115 +152,115 @@ export default function UserFormDialog({
                 </div>
 
                 <div className="sm:flex sm:items-start">
-                  <div className="mt-3 w-full text-center sm:mt-0 sm:text-left">
+                  <div className="w-full text-center sm:text-left">
                     <Dialog.Title
                       as="h3"
-                      className="text-lg font-semibold leading-6 text-gray-900 mb-6"
+                      className="text-xl font-bold leading-7 text-gray-900 mb-8"
                     >
                       {mode === 'create' ? '创建新用户' : '编辑用户信息'}
                     </Dialog.Title>
 
-                    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-                      <div>
+                    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+                      <div className="space-y-2">
                         <label
                           htmlFor="name"
-                          className="block text-sm font-medium leading-6 text-gray-900"
+                          className="block text-sm font-semibold leading-6 text-gray-900"
                         >
                           用户名
                         </label>
-                        <div className="mt-2">
+                        <div className="mt-1">
                           <input
                             type="text"
                             {...register('name')}
-                            className="block w-full rounded-lg border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6"
+                            className="block w-full rounded-lg border-0 py-2.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6 transition-shadow duration-200"
                             placeholder="请输入用户名"
                           />
                           {errors.name && (
-                            <p className="mt-2 text-sm text-red-600">
+                            <p className="mt-2 text-sm text-red-600 animate-fadeIn">
                               {errors.name.message}
                             </p>
                           )}
                         </div>
                       </div>
 
-                      <div>
+                      <div className="space-y-2">
                         <label
                           htmlFor="email"
-                          className="block text-sm font-medium leading-6 text-gray-900"
+                          className="block text-sm font-semibold leading-6 text-gray-900"
                         >
                           邮箱地址
                         </label>
-                        <div className="mt-2">
+                        <div className="mt-1">
                           <input
                             type="email"
                             {...register('email')}
-                            className="block w-full rounded-lg border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6"
+                            className="block w-full rounded-lg border-0 py-2.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6 transition-shadow duration-200"
                             placeholder="请输入邮箱地址"
                           />
                           {errors.email && (
-                            <p className="mt-2 text-sm text-red-600">
+                            <p className="mt-2 text-sm text-red-600 animate-fadeIn">
                               {errors.email.message}
                             </p>
                           )}
                         </div>
                       </div>
 
-                      <div>
+                      <div className="space-y-2">
                         <label
                           htmlFor="password"
-                          className="block text-sm font-medium leading-6 text-gray-900"
+                          className="block text-sm font-semibold leading-6 text-gray-900"
                         >
                           密码{mode === 'edit' && ' (留空表示不修改)'}
                         </label>
-                        <div className="mt-2">
+                        <div className="mt-1">
                           <input
                             type="password"
                             {...register('password')}
-                            className="block w-full rounded-lg border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6"
+                            className="block w-full rounded-lg border-0 py-2.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6 transition-shadow duration-200"
                             placeholder={mode === 'create' ? '请输入密码' : '输入新密码'}
                           />
                           {errors.password && (
-                            <p className="mt-2 text-sm text-red-600">
+                            <p className="mt-2 text-sm text-red-600 animate-fadeIn">
                               {errors.password.message}
                             </p>
                           )}
                         </div>
                       </div>
 
-                      <div>
+                      <div className="space-y-2">
                         <label
                           htmlFor="role"
-                          className="block text-sm font-medium leading-6 text-gray-900"
+                          className="block text-sm font-semibold leading-6 text-gray-900"
                         >
                           用户角色
                         </label>
-                        <div className="mt-2">
+                        <div className="mt-1">
                           <select
                             {...register('role')}
-                            className="block w-full rounded-lg border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6 appearance-none bg-none pr-8"
+                            className="block w-full rounded-lg border-0 py-2.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6 transition-shadow duration-200 appearance-none bg-none pr-8"
                           >
                             <option value="USER">普通用户</option>
                             <option value="ADMIN">管理员</option>
                           </select>
                           {errors.role && (
-                            <p className="mt-2 text-sm text-red-600">
+                            <p className="mt-2 text-sm text-red-600 animate-fadeIn">
                               {errors.role.message}
                             </p>
                           )}
                         </div>
                       </div>
 
-                      <div className="mt-8 sm:mt-6 sm:grid sm:grid-flow-row-dense sm:grid-cols-2 sm:gap-3">
+                      <div className="mt-10 sm:grid sm:grid-flow-row-dense sm:grid-cols-2 sm:gap-4">
                         <button
                           type="submit"
                           disabled={isSubmitting}
-                          className="inline-flex w-full justify-center rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 sm:col-start-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="inline-flex w-full justify-center rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 sm:col-start-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
                         >
                           {isSubmitting ? '提交中...' : mode === 'create' ? '创建' : '更新'}
                         </button>
                         <button
                           type="button"
-                          className="mt-3 inline-flex w-full justify-center rounded-lg bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:col-start-1 sm:mt-0"
+                          className="mt-3 inline-flex w-full justify-center rounded-lg bg-white px-4 py-2.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:col-start-1 sm:mt-0 transition-colors duration-200"
                           onClick={onClose}
                         >
                           取消
