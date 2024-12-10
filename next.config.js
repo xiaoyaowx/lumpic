@@ -8,14 +8,10 @@ const nextConfig = {
       {
         protocol: 'http',
         hostname: 'localhost',
-        port: '3000',
-        pathname: '/uploads/**',
       },
       {
-        protocol: 'http',
+        protocol: 'https',
         hostname: 'localhost',
-        port: '3000',
-        pathname: '/thumbnails/**',
       },
       {
         protocol: 'https',
@@ -47,6 +43,18 @@ const nextConfig = {
             value: 'public, max-age=31536000, immutable',
           },
         ],
+      },
+    ];
+  },
+  async rewrites() {
+    return [
+      {
+        source: '/uploads/:path*',
+        destination: '/api/static/uploads/:path*',
+      },
+      {
+        source: '/thumbnails/:path*',
+        destination: '/api/static/thumbnails/:path*',
       },
     ];
   },
