@@ -51,5 +51,10 @@ logs
 # Optional eslint cache
 .eslintcache
 
-# uploads directory (if you have one for local development)
-/uploads
+# uploads
+/public/uploads/*
+!/public/uploads/.gitkeep
+
+# thumbnails
+/public/thumbnails/*
+!/public/thumbnails/.gitkeep
