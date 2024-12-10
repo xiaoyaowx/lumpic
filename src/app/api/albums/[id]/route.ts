@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '../../auth/auth.config';
+import { unlink } from 'fs/promises';
+import path from 'path';
 
 // 获取单个相册详情
 export async function GET(
@@ -128,10 +130,14 @@ export async function DELETE(
       return NextResponse.json({ error: '用户不存在' }, { status: 404 });
     }
 
+    // 获取相册及其所有图片
     const album = await prisma.album.findFirst({
       where: {
         id: params.id,
         userId: user.id,
+      },
+      include: {
+        images: true,
       },
     });
 
@@ -139,11 +145,32 @@ export async function DELETE(
       return NextResponse.json({ error: '相册不存在' }, { status: 404 });
     }
 
-    await prisma.album.delete({
-      where: { id: params.id },
-    });
+    // 删除所有图片文件
+    for (const image of album.images) {
+      const imagePath = path.join(process.cwd(), 'public/uploads', image.filename);
+      const extension = image.filename.split('.').pop() || '';
+      const fileId = image.filename.split('.')[0];
+      const thumbnailPath = path.join(process.cwd(), 'public/thumbnails', `${fileId}_thumb.${extension}`);
+      
+      try {
+        await unlink(imagePath);
+        await unlink(thumbnailPath);
+      } catch (error) {
+        console.error(`删除图片文件失败: ${image.filename}`, error);
+      }
+    }
 
-    return NextResponse.json({ message: '相册已删除' });
+    // 使用事务删除相册及其所有图片记录
+    await prisma.$transaction([
+      prisma.image.deleteMany({
+        where: { albumId: params.id },
+      }),
+      prisma.album.delete({
+        where: { id: params.id },
+      }),
+    ]);
+
+    return NextResponse.json({ message: '相册删除成功' });
   } catch (error) {
     console.error('删除相册失败:', error);
     return NextResponse.json({ error: '删除相册失败' }, { status: 500 });

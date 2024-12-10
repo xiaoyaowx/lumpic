@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import toast from 'react-hot-toast';
+import ConfirmDialog from '@/components/ConfirmDialog';
 
 interface Album {
   id: string;
@@ -23,6 +24,11 @@ export default function AlbumsPage() {
   const router = useRouter();
   const [albums, setAlbums] = useState<Album[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isDeleting, setIsDeleting] = useState<string | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ isOpen: boolean; albumId: string | null }>({
+    isOpen: false,
+    albumId: null
+  });
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -48,6 +54,38 @@ export default function AlbumsPage() {
 
     fetchAlbums();
   }, [status, router]);
+
+  const handleDeleteClick = (e: React.MouseEvent, albumId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDeleteConfirm({ isOpen: true, albumId });
+  };
+
+  const confirmDelete = async () => {
+    const albumId = deleteConfirm.albumId;
+    if (!albumId) return;
+
+    try {
+      setIsDeleting(albumId);
+      const response = await fetch(`/api/albums/${albumId}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error('删除相册失败');
+      }
+
+      // 从本地状态中移除相册
+      setAlbums(albums.filter(album => album.id !== albumId));
+      toast.success('相册已删除');
+    } catch (error) {
+      console.error('删除相册失败:', error);
+      toast.error('删除相册失败');
+    } finally {
+      setIsDeleting(null);
+      setDeleteConfirm({ isOpen: false, albumId: null });
+    }
+  };
 
   if (status === 'loading' || isLoading) {
     return (
@@ -94,7 +132,18 @@ export default function AlbumsPage() {
                 href={`/albums/${album.id}`}
                 className="block group"
               >
-                <div className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-200">
+                <div className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-200 relative group">
+                  <div className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                    <button
+                      onClick={(e) => handleDeleteClick(e, album.id)}
+                      className="p-2 bg-black bg-opacity-50 rounded-full hover:bg-opacity-75 transition-colors duration-200 disabled:opacity-50"
+                      disabled={isDeleting === album.id}
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                    </button>
+                  </div>
                   <div className="relative w-full pt-[56.25%]">
                     {album.coverImage ? (
                       <Image
@@ -144,6 +193,16 @@ export default function AlbumsPage() {
           </div>
         )}
       </div>
+      <ConfirmDialog
+        isOpen={deleteConfirm.isOpen}
+        onClose={() => setDeleteConfirm({ isOpen: false, albumId: null })}
+        onConfirm={confirmDelete}
+        title="删除相册"
+        message="确定要删除这个相册吗？此操作将同时删除相册中的所有图片，且不可恢复。"
+        confirmText="删除"
+        cancelText="取消"
+        type="danger"
+      />
     </div>
   );
 }
