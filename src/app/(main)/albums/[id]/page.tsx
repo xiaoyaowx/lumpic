@@ -7,6 +7,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import toast from 'react-hot-toast';
 import ImageUploader from '@/components/ImageUploader';
+import ConfirmDialog from '@/components/ConfirmDialog';
 import { Album } from '@/types/album';
 
 export default function AlbumPage({ params }: { params: { id: string } }) {
@@ -15,6 +16,10 @@ export default function AlbumPage({ params }: { params: { id: string } }) {
   const [album, setAlbum] = useState<Album | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ isOpen: boolean; imageId: string | null }>({
+    isOpen: false,
+    imageId: null
+  });
 
   const fetchAlbum = async () => {
     try {
@@ -48,6 +53,13 @@ export default function AlbumPage({ params }: { params: { id: string } }) {
   };
 
   const handleDeleteImage = async (imageId: string) => {
+    setDeleteConfirm({ isOpen: true, imageId });
+  };
+
+  const confirmDelete = async () => {
+    const imageId = deleteConfirm.imageId;
+    if (!imageId) return;
+
     try {
       setIsDeleting(imageId);
       const response = await fetch(`/api/image/${imageId}`, {
@@ -59,16 +71,15 @@ export default function AlbumPage({ params }: { params: { id: string } }) {
       }
 
       // 从本地状态中移除图片
-      setAlbum(prev => 
-        prev ? {
-          ...prev,
-          images: prev.images.filter(img => img.id !== imageId),
+      if (album) {
+        setAlbum({
+          ...album,
+          images: album.images.filter((img) => img.id !== imageId),
           _count: {
-            images: (prev._count?.images ?? prev.images.length) - 1
+            images: (album._count?.images ?? album.images.length) - 1
           }
-        } : null
-      );
-      
+        });
+      }
       toast.success('图片已删除');
     } catch (error) {
       console.error('删除图片失败:', error);
@@ -162,7 +173,7 @@ export default function AlbumPage({ params }: { params: { id: string } }) {
                     </div>
                   </div>
                 </Link>
-                {/* 删除按钮 - 优化位置和样式 */}
+                {/* 删除按钮 */}
                 <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                   <button
                     onClick={(e) => {
@@ -207,6 +218,16 @@ export default function AlbumPage({ params }: { params: { id: string } }) {
           </div>
         )}
       </div>
+      <ConfirmDialog
+        isOpen={deleteConfirm.isOpen}
+        onClose={() => setDeleteConfirm({ isOpen: false, imageId: null })}
+        onConfirm={confirmDelete}
+        title="删除图片"
+        message="确定要删除这张图片吗？此操作不可恢复，图片文件将被永久删除。"
+        confirmText="删除"
+        cancelText="取消"
+        type="danger"
+      />
     </div>
   );
 }

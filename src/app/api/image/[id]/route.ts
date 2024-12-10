@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '../../auth/auth.config';
+import { unlink } from 'fs/promises';
+import { join } from 'path';
 
 // 获取单张图片详情
 export async function GET(
@@ -157,7 +159,29 @@ export async function DELETE(
     }
 
     // 删除图片文件
-    // TODO: 实现文件删除逻辑
+    try {
+      const uploadPath = join(process.cwd(), 'public', 'uploads');
+      const thumbnailPath = join(process.cwd(), 'public', 'thumbnails');
+      
+      // 从 URL 中提取文件名
+      const filename = image.url.split('/').pop();
+      const thumbnailFilename = image.thumbnailUrl.split('/').pop();
+      
+      if (filename) {
+        await unlink(join(uploadPath, filename)).catch(() => {
+          console.warn(`原始图片文件不存在: ${filename}`);
+        });
+      }
+      
+      if (thumbnailFilename) {
+        await unlink(join(thumbnailPath, thumbnailFilename)).catch(() => {
+          console.warn(`缩略图文件不存在: ${thumbnailFilename}`);
+        });
+      }
+    } catch (error) {
+      console.error('删除图片文件失败:', error);
+      // 继续执行数据库删除操作
+    }
 
     // 删除数据库记录
     await prisma.image.delete({
