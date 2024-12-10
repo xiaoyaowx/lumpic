@@ -128,11 +128,11 @@ export default function AlbumsPage() {
                     <h3 className="text-lg font-medium text-gray-900 mb-1">
                       {album.name}
                     </h3>
-                    {album.description && (
-                      <p className="text-sm text-gray-500 mb-2 line-clamp-2">
-                        {album.description}
+                    <div className="h-[3em] mb-2">
+                      <p className="text-sm text-gray-500 line-clamp-2">
+                        {album.description || '暂无描述'}
                       </p>
-                    )}
+                    </div>
                     <div className="flex items-center justify-between text-sm text-gray-500">
                       <span>{album._count.images} 张图片</span>
                       <span>{new Date(album.createdAt).toLocaleDateString()}</span>
