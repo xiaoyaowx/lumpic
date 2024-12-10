@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '../../auth/auth.config';
-import { unlink } from 'fs/promises';
+import { deleteImage } from '@/lib/storage';
 import path from 'path';
 
 // 获取单个相册详情
@@ -39,6 +39,7 @@ export async function GET(
             size: true,
             createdAt: true,
             url: true,
+            thumbnailUrl: true,
           },
           orderBy: {
             createdAt: 'desc',
@@ -137,7 +138,18 @@ export async function DELETE(
         userId: user.id,
       },
       include: {
-        images: true,
+        images: {
+          select: {
+            id: true,
+            filename: true,
+            title: true,
+            mimeType: true,
+            size: true,
+            createdAt: true,
+            url: true,
+            thumbnailUrl: true,
+          },
+        },
       },
     });
 
@@ -145,16 +157,13 @@ export async function DELETE(
       return NextResponse.json({ error: '相册不存在' }, { status: 404 });
     }
 
-    // 删除所有图片文件
+    // 删除相册中的所有图片文件
     for (const image of album.images) {
-      const imagePath = path.join(process.cwd(), 'public/uploads', image.filename);
-      const extension = image.filename.split('.').pop() || '';
-      const fileId = image.filename.split('.')[0];
-      const thumbnailPath = path.join(process.cwd(), 'public/thumbnails', `${fileId}_thumb.${extension}`);
-      
       try {
-        await unlink(imagePath);
-        await unlink(thumbnailPath);
+        // 删除原图
+        await deleteImage(image.url);
+        // 删除缩略图
+        await deleteImage(image.thumbnailUrl);
       } catch (error) {
         console.error(`删除图片文件失败: ${image.filename}`, error);
       }
