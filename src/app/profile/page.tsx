@@ -215,7 +215,7 @@ export default function ProfilePage() {
                     <div className="relative group">
                       <div className="relative w-32 lg:w-40 h-32 lg:h-40 rounded-full overflow-hidden ring-4 ring-white shadow-lg">
                         <Image
-                          src={previewImage || session?.user?.image || `/avatars/default.png`}
+                          src={previewImage || session?.user?.image || `/avatars/default.svg`}
                           alt="用户头像"
                           fill
                           className="object-cover"

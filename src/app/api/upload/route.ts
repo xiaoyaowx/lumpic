@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { authOptions } from '../auth/auth.config';
 import prisma from '@/lib/prisma';
 import { writeFile } from 'fs/promises';
 import { join } from 'path';
