@@ -42,7 +42,7 @@ next-env.d.ts
 .vscode/
 
 # Logs
-logs
+
 *.log
 
 # Optional npm cache directory
