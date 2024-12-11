@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/auth.config';
 import prisma from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
+import { format } from 'date-fns';
 
 // GET /api/admin/images - 获取图片列表
 export async function GET(request: Request) {
@@ -57,10 +58,22 @@ export async function GET(request: Request) {
     // 查询总数
     const total = await prisma.image.count({ where });
 
-    // 查询图片列表
+    // 查询图片列表，并按拍摄时间分组
     const images = await prisma.image.findMany({
       where,
-      include: {
+      select: {
+        id: true,
+        title: true,
+        filename: true,
+        url: true,
+        thumbnailUrl: true,
+        mimeType: true,
+        size: true,
+        width: true,
+        height: true,
+        photoTakenAt: true,
+        createdAt: true,
+        exifData: true,
         user: {
           select: {
             id: true,
@@ -70,20 +83,34 @@ export async function GET(request: Request) {
         },
       },
       orderBy: {
-        createdAt: 'desc' as Prisma.SortOrder,
+        photoTakenAt: 'desc' as Prisma.SortOrder,
       },
       skip: (page - 1) * pageSize,
       take: pageSize,
     });
 
+    // 将图片按日期分组
+    const groupedImages = images.reduce((groups, image) => {
+      const date = format(image.photoTakenAt, 'yyyy-MM-dd');
+      if (!groups[date]) {
+        groups[date] = [];
+      }
+      groups[date].push(image);
+      return groups;
+    }, {} as Record<string, typeof images>);
+
+    // 转换为数组格式并按日期排序
+    const result = Object.entries(groupedImages).map(([date, images]) => ({
+      date,
+      images,
+    })).sort((a, b) => b.date.localeCompare(a.date));
+
     return NextResponse.json({
-      data: images,
-      pagination: {
-        page,
-        pageSize,
-        total,
-        totalPages: Math.ceil(total / pageSize),
-      },
+      total,
+      totalPages: Math.ceil(total / pageSize),
+      currentPage: page,
+      pageSize,
+      groups: result,
     });
   } catch (error) {
     console.error('Error in GET /api/admin/images:', error);

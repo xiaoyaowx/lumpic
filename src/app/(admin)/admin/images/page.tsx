@@ -10,7 +10,7 @@ import { ChevronLeftIcon, ChevronRightIcon, MagnifyingGlassIcon, EyeIcon, TrashI
 
 interface ImageItem {
   id: string;
-  title: string;
+  title: string | null;
   description: string | null;
   url: string;
   thumbnailUrl: string;
@@ -28,7 +28,7 @@ interface ImageItem {
 }
 
 interface PaginationInfo {
-  page: number;
+  currentPage: number;
   pageSize: number;
   total: number;
   totalPages: number;
@@ -38,7 +38,7 @@ export default function ImagesPage() {
   const router = useRouter();
   const [images, setImages] = useState<ImageItem[]>([]);
   const [pagination, setPagination] = useState<PaginationInfo>({
-    page: 1,
+    currentPage: 1,
     pageSize: 10, 
     total: 0,
     totalPages: 0,
@@ -53,7 +53,7 @@ export default function ImagesPage() {
     try {
       setLoading(true);
       const params = new URLSearchParams({
-        page: pagination.page.toString(),
+        page: pagination.currentPage.toString(),
         pageSize: pagination.pageSize.toString(),
       });
 
@@ -65,8 +65,15 @@ export default function ImagesPage() {
       if (!response.ok) throw new Error('加载图片列表失败');
 
       const data = await response.json();
-      setImages(data.data);
-      setPagination(data.pagination);
+      // API 返回的是按日期分组的数据，我们需要展平为列表
+      const flattenedImages = data.groups.flatMap((group: { images: ImageItem[] }) => group.images);
+      setImages(flattenedImages);
+      setPagination({
+        currentPage: data.currentPage,
+        pageSize: data.pageSize,
+        total: data.total,
+        totalPages: data.totalPages,
+      });
     } catch (error) {
       toast.error('加载图片列表失败');
       console.error(error);
@@ -77,7 +84,7 @@ export default function ImagesPage() {
 
   useEffect(() => {
     loadImages();
-  }, [pagination.page, pagination.pageSize, search]);
+  }, [pagination.currentPage, pagination.pageSize, search]);
 
   // 删除图片
   const handleDelete = async (imageId: string) => {
@@ -108,7 +115,7 @@ export default function ImagesPage() {
 
   // 查看图片详情
   const viewImageDetail = (image: ImageItem) => {
-    router.push(`/admin/images/${image.id}`);
+    window.open(image.url, '_blank');
   };
 
   // 格式化文件大小
@@ -165,7 +172,7 @@ export default function ImagesPage() {
                     <div className="relative h-16 w-16 rounded-lg overflow-hidden">
                       <Image
                         src={image.thumbnailUrl}
-                        alt={image.title}
+                        alt={image.title || ''}
                         fill
                         sizes="64px"
                         className="object-cover"
@@ -181,7 +188,7 @@ export default function ImagesPage() {
                     )}
                   </td>
                   <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                    {image.width}x{image.height}
+                    {image.width && image.height ? `${image.width}x${image.height}` : '未知'}
                   </td>
                   <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                     {formatFileSize(image.size)}
@@ -194,20 +201,18 @@ export default function ImagesPage() {
                   <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                     {format(new Date(image.createdAt), 'yyyy-MM-dd HH:mm')}
                   </td>
-                  <td className="whitespace-nowrap px-3 py-4 text-sm text-right">
+                  <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
                     <div className="flex items-center justify-end space-x-3">
                       <button
                         onClick={() => viewImageDetail(image)}
                         className="inline-flex items-center gap-1.5 rounded-md bg-blue-50 px-2.5 py-1.5 text-sm font-semibold text-blue-600 hover:bg-blue-100 hover:text-blue-700 transition-colors duration-200"
                       >
-                        <EyeIcon className="h-4 w-4" aria-hidden="true" />
                         查看
                       </button>
                       <button
                         onClick={() => openDeleteConfirm(image)}
                         className="inline-flex items-center gap-1.5 rounded-md bg-red-50 px-2.5 py-1.5 text-sm font-semibold text-red-600 hover:bg-red-100 hover:text-red-700 transition-colors duration-200"
                       >
-                        <TrashIcon className="h-4 w-4" aria-hidden="true" />
                         删除
                       </button>
                     </div>
@@ -228,15 +233,15 @@ export default function ImagesPage() {
         <div className="flex items-center justify-between border-t border-gray-200 px-4 py-3 sm:px-6">
           <div className="flex flex-1 justify-between sm:hidden">
             <button
-              onClick={() => setPagination(prev => ({ ...prev, page: prev.page - 1 }))}
-              disabled={pagination.page === 1}
+              onClick={() => setPagination(prev => ({ ...prev, currentPage: prev.currentPage - 1 }))}
+              disabled={pagination.currentPage === 1}
               className="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               上一页
             </button>
             <button
-              onClick={() => setPagination(prev => ({ ...prev, page: prev.page + 1 }))}
-              disabled={pagination.page === pagination.totalPages}
+              onClick={() => setPagination(prev => ({ ...prev, currentPage: prev.currentPage + 1 }))}
+              disabled={pagination.currentPage === pagination.totalPages}
               className="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               下一页
@@ -247,11 +252,11 @@ export default function ImagesPage() {
               <p className="text-sm text-gray-700">
                 显示第{' '}
                 <span className="font-medium">
-                  {(pagination.page - 1) * pagination.pageSize + 1}
+                  {(pagination.currentPage - 1) * pagination.pageSize + 1}
                 </span>{' '}
                 到{' '}
                 <span className="font-medium">
-                  {Math.min(pagination.page * pagination.pageSize, pagination.total)}
+                  {Math.min(pagination.currentPage * pagination.pageSize, pagination.total)}
                 </span>{' '}
                 条，共{' '}
                 <span className="font-medium">{pagination.total}</span>{' '}
@@ -261,16 +266,16 @@ export default function ImagesPage() {
             <div>
               <nav className="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
                 <button
-                  onClick={() => setPagination(prev => ({ ...prev, page: prev.page - 1 }))}
-                  disabled={pagination.page === 1}
+                  onClick={() => setPagination(prev => ({ ...prev, currentPage: prev.currentPage - 1 }))}
+                  disabled={pagination.currentPage === 1}
                   className="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <span className="sr-only">上一页</span>
                   <ChevronLeftIcon className="h-5 w-5" aria-hidden="true" />
                 </button>
                 <button
-                  onClick={() => setPagination(prev => ({ ...prev, page: prev.page + 1 }))}
-                  disabled={pagination.page === pagination.totalPages}
+                  onClick={() => setPagination(prev => ({ ...prev, currentPage: prev.currentPage + 1 }))}
+                  disabled={pagination.currentPage === pagination.totalPages}
                   className="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <span className="sr-only">下一页</span>

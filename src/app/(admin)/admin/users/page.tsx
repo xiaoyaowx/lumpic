@@ -336,22 +336,24 @@ export default function UsersPage() {
                         {format(new Date(user.createdAt), 'yyyy-MM-dd HH:mm')}
                       </td>
                       <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
-                        <button
-                          onClick={() => {
-                            setModalMode('edit');
-                            setSelectedUser(user);
-                            setIsModalOpen(true);
-                          }}
-                          className="text-blue-600 hover:text-blue-900 mr-4"
-                        >
-                          编辑
-                        </button>
-                        <button
-                          onClick={() => openDeleteConfirm(user)}
-                          className="text-red-600 hover:text-red-900"
-                        >
-                          删除
-                        </button>
+                        <div className="flex items-center justify-end space-x-3">
+                          <button
+                            onClick={() => {
+                              setModalMode('edit');
+                              setSelectedUser(user);
+                              setIsModalOpen(true);
+                            }}
+                            className="inline-flex items-center gap-1.5 rounded-md bg-blue-50 px-2.5 py-1.5 text-sm font-semibold text-blue-600 hover:bg-blue-100 hover:text-blue-700 transition-colors duration-200"
+                          >
+                            编辑
+                          </button>
+                          <button
+                            onClick={() => openDeleteConfirm(user)}
+                            className="inline-flex items-center gap-1.5 rounded-md bg-red-50 px-2.5 py-1.5 text-sm font-semibold text-red-600 hover:bg-red-100 hover:text-red-700 transition-colors duration-200"
+                          >
+                            删除
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
