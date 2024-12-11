@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/auth.config';
+import { Prisma } from '@prisma/client';
 
 // 获取标签列表
 export async function GET(request: NextRequest) {
@@ -19,24 +20,24 @@ export async function GET(request: NextRequest) {
     const skip = (page - 1) * pageSize;
 
     // 构建查询条件
-    const where = {
-      OR: search
-        ? [
+    const where: Prisma.TagWhereInput = search
+      ? {
+          OR: [
             {
               name: {
                 contains: search,
-                mode: 'insensitive',
+                mode: 'insensitive' as Prisma.QueryMode,
               },
             },
             {
               description: {
                 contains: search,
-                mode: 'insensitive',
+                mode: 'insensitive' as Prisma.QueryMode,
               },
             },
-          ]
-        : undefined,
-    };
+          ],
+        }
+      : {};
 
     // 获取总数
     const total = await prisma.tag.count({ where });
