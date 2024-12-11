@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import ExifDataDisplay from '@/components/ExifDataDisplay';
+import TagSelector from '@/components/TagSelector';
 import { toast } from 'react-hot-toast';
 
 interface ImageDetails {
@@ -143,12 +144,15 @@ export default function ImagePage({ params }: { params: { id: string } }) {
                     {image.title || '未命名图片'}
                   </h1>
                   {image.description && (
-                    <p className="text-lg text-gray-600">
-                      {image.description}
-                    </p>
+                    <p className="text-lg text-gray-600">{image.description}</p>
                   )}
                 </div>
-                
+
+                {/* 标签选择器 */}
+                <div className="border-t border-gray-100 pt-6">
+                  <TagSelector imageId={image.id} />
+                </div>
+
                 {/* 所属相册 */}
                 <div className="border-t border-gray-100 pt-6">
                   <div className="flex items-center text-sm text-gray-500">

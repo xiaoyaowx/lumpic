@@ -33,7 +33,7 @@ model Album {
 }
 
 model Image {
-  id           String   @id @default(cuid())
+  id           String     @id @default(cuid())
   title        String?
   filename     String
   url          String
@@ -44,11 +44,32 @@ model Image {
   width        Int?
   height       Int?
   userId       String
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   exifData     Json?
-  photoTakenAt DateTime @default(now())
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  photoTakenAt DateTime   @default(now())
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
   albumId      String?
-  album        Album?   @relation(fields: [albumId], references: [id], onDelete: SetNull)
+  album        Album?     @relation(fields: [albumId], references: [id], onDelete: SetNull)
+  tags         ImageTag[]
+}
+
+model Tag {
+  id          String     @id @default(cuid())
+  name        String     @unique
+  description String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  images      ImageTag[]
+}
+
+model ImageTag {
+  id        String   @id @default(cuid())
+  imageId   String
+  tagId     String
+  createdAt DateTime @default(now())
+  image     Image    @relation(fields: [imageId], references: [id], onDelete: Cascade)
+  tag       Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@unique([imageId, tagId])
 }
