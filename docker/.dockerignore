@@ -1,0 +1,12 @@
+node_modules
+.next
+.git
+.env*
+.dockerignore
+Dockerfile
+docker-compose.yml
+README.md
+.vscode
+*.log
+public/uploads/*  # 排除已上传的图片，这些会通过 volume 挂载
+public/thumbnails/*

@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  web:
+    image: image-flowstream:latest
+    ports:
+      - "3000:3000"
+    #environment:
+      #- DATABASE_URL=postgresql://postgres:123456@db:5432/image_gallery?schema=public
+      #- NODE_ENV=production
+      #- NEXTAUTH_URL="http://localhost:3000"
+      #- NEXTAUTH_SECRET="4c716d4cf0c6df5daa9c74662b55d420"
+      # Add other environment variables here
+    depends_on:
+      - db
+    volumes:
+      - ./uploads:/app/public/uploads  # 持久化上传的图片
+      - ./thumbnails:/app/public/thumbnails  # 持久化缩略图
+      - ./.env:/app/.env                  # 持久化环境变量
+
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=123456
+      - POSTGRES_DB=image_gallery
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./postgres_data:/var/lib/postgresql/data
+
+#volumes:
+#  postgres_data:  # 持久化数据库数据
+# uploads:        # 持久化上传的图片
