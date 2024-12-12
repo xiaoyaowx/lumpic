@@ -96,7 +96,7 @@ npm run dev
 ![图片浏览](public/images/photo-library-image.jpg)
 
 ### 图片上传
-![图片上传][public/images/photo-library-upload.jpg)
+![图片上传](public/images/photo-library-upload.jpg)
 
 ### 管理界面
 ![管理界面](public/images/photo-library-admin.jpg)
